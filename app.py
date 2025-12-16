@@ -223,11 +223,3 @@ if not filtered_df.empty:
     )
 else:
     st.warning("⚠️ 目前沒有資料可顯示，請檢查資料來源連結或調整篩選日期。")
-```
-
-### 修改重點：
-我在第 45 行左右加了這段邏輯：
-```python
-# ⚠️ [新功能] 過濾年份範圍：只保留 2000 ~ 2050 年的資料
-df = df[df['date'].notna()] # 先移除日期是空值的
-df = df[ (df['date'].dt.year >= 2000) & (df['date'].dt.year <= 2050) ]
