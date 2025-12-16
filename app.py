@@ -40,7 +40,14 @@ def load_data():
         })
         
         # 處理日期與空值
-        df['date'] = pd.to_datetime(df['date'])
+        # errors='coerce' 代表如果有轉換失敗的日期（例如亂碼），會變成 NaT (空值) 而不是報錯
+        df['date'] = pd.to_datetime(df['date'], errors='coerce')
+        
+        # ⚠️ [新功能] 過濾年份範圍：只保留 2000 ~ 2050 年的資料
+        # 這可以避免誤植成 3000 年或 1900 年的資料破壞圖表
+        df = df[df['date'].notna()] # 先移除日期是空值的
+        df = df[ (df['date'].dt.year >= 2000) & (df['date'].dt.year <= 2050) ]
+
         df = df.sort_values(by='date', ascending=False)
         df = df.fillna(0)
         return df
@@ -60,9 +67,13 @@ df['date_str'] = df['date'].dt.strftime('%Y-%m-%d')
 # ---------------------------------------------------------
 st.sidebar.header("🔎 篩選條件")
 
-# 找出資料中最早和最晚的日期
-min_date = df['date'].min().date()
-max_date = df['date'].max().date()
+# 找出資料中最早和最晚的日期 (現在保證在 2000-2050 之間)
+if not df.empty:
+    min_date = df['date'].min().date()
+    max_date = df['date'].max().date()
+else:
+    min_date = datetime.today().date()
+    max_date = datetime.today().date()
 
 # 建立日期選擇器 (預設選取全部範圍)
 start_date, end_date = st.sidebar.date_input(
@@ -212,3 +223,11 @@ if not filtered_df.empty:
     )
 else:
     st.warning("⚠️ 目前沒有資料可顯示，請檢查資料來源連結或調整篩選日期。")
+```
+
+### 修改重點：
+我在第 45 行左右加了這段邏輯：
+```python
+# ⚠️ [新功能] 過濾年份範圍：只保留 2000 ~ 2050 年的資料
+df = df[df['date'].notna()] # 先移除日期是空值的
+df = df[ (df['date'].dt.year >= 2000) & (df['date'].dt.year <= 2050) ]
